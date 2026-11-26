@@ -48,13 +48,14 @@ export async function listExpenses() {
         select t.description          as descripcion,
                t.amount               as monto,
                coalesce(pm.name, '-') as metodo_pago,
-               c.name                 as categoria,
+               coalesce(c.name, '-')  as categoria,
                t.transaction_date     as fecha
         from costs.transactions t
                  left join costs.payment_methods pm
                            on t.pay_method_id = pm.id_method
                  left join costs.categories c
                            on t.category_id = c.id_category
+        order by t.transaction_date desc;
     `;
 
     const { rows } = await pool.query(query);
@@ -63,7 +64,9 @@ export async function listExpenses() {
 
 export async function countExpenses(){
     const query = `
-        select pm."name" , count(t.id_transaction ) as total_transacciones
+        select 
+            coalesce(pm."name", '-') as metodo_pago,
+            count(t.id_transaction )::int as total_transacciones
         from costs.payment_methods pm 
         right join costs.transactions t
         on t.pay_method_id = pm.id_method
